@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamp('timestamp');
             $table->enum('interval', ['1min', '5min', '15min', '30min', '1h', '4h', '1d', '1w', '1M']);
             $table->timestamps();
-            
+
             $table->index('stock_id');
             $table->index('timestamp');
             $table->index(['stock_id', 'interval', 'timestamp']);

@@ -21,7 +21,7 @@ return new class extends Migration
             $table->decimal('unrealized_pnl', 15, 2)->default(0);
             $table->decimal('unrealized_pnl_percent', 8, 4)->default(0.0000);
             $table->timestamps();
-            
+
             $table->unique(['portfolio_id', 'stock_id']);
             $table->index('portfolio_id');
             $table->index('stock_id');

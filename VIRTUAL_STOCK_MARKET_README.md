@@ -5,6 +5,7 @@ A full-featured virtual stock market simulation built with Laravel 13, featuring
 ## 🚀 Features
 
 ### Core Functionality
+- **Landing Page**: Marketing page with a live market tape, movers table, leaderboard and FAQ
 - **Stock Trading**: Buy and sell stocks with real-time price updates
 - **Portfolio Management**: Track holdings, P&L, and asset allocation
 - **Market Overview**: View gainers, losers, sector performance
@@ -44,6 +45,13 @@ database/
     └── StockSeeder.php          # Sample stocks (12 companies)
 
 resources/views/
+├── landing/                     # Public marketing page
+│   ├── index.blade.php          # Page shell (fonts, Vite entries, sections)
+│   └── partials/                # nav, hero, hero-terminal, ticker, stats,
+│                                # features, how-it-works, order-ticket,
+│                                # showcase, leaderboard, workspaces,
+│                                # testimonials, faq, cta, footer
+├── components/landing/          # section-heading, feature-card, stat, faq-item
 ├── dashboard.blade.php          # Main dashboard
 ├── stocks/
 │   ├── index.blade.php         # Stock market list
@@ -112,6 +120,29 @@ The application comes pre-seeded with 12 popular stocks:
 - **Financial**: JPM, V
 - **Healthcare**: JNJ
 - **Communication**: NFLX
+
+## 🖥️ Landing Page
+
+The public marketing page is served at `/` (signed-in visitors are pointed straight at their dashboard
+instead of a sign-up form).
+
+- **Controller** — `app/Http/Controllers/LandingController.php` builds the live tape, biggest movers, top
+  three portfolios and market metrics. When the market has not been seeded yet (or the database is
+  unreachable) it falls back to a documented demo snapshot so the page still renders.
+- **Views** — `resources/views/landing/index.blade.php` plus section partials in
+  `resources/views/landing/partials/`, with reusable pieces in `resources/views/components/landing/`.
+- **Styles** — Tailwind handles the layout; `resources/css/landing.css` (its own Vite entry) adds the
+  scroll-reveal states, marquee ticker, pointer spotlight and grain texture. Design tokens (brand/mint/ink
+  palettes, Sora display font, float and gradient keyframes) live in `tailwind.config.js`.
+- **Behaviour** — `resources/js/app.js` registers the `x-reveal`, `x-counter` and `x-spotlight` Alpine
+  directives plus the `liveTicker` component that nudges hero prices every few seconds. Motion is skipped
+  entirely when the visitor prefers reduced motion.
+
+Rebuild assets after changing anything on the page:
+
+```bash
+npm run build   # or: npm run dev
+```
 
 ## 🎯 Key Features Explained
 

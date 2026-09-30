@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -73,7 +72,7 @@ class PortfolioHolding extends Model
         $currentPrice = $this->stock->current_price;
         $this->current_value = round($this->quantity * $currentPrice, 2);
         $this->unrealized_pnl = round($this->current_value - ($this->quantity * $this->average_cost), 2);
-        $this->unrealized_pnl_percent = $this->average_cost > 0 
+        $this->unrealized_pnl_percent = $this->average_cost > 0
             ? round(($this->unrealized_pnl / ($this->quantity * $this->average_cost)) * 100, 4)
             : 0;
         $this->save();

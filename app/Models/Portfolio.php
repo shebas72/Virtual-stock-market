@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Portfolio extends Model
 {
@@ -78,6 +78,7 @@ class Portfolio extends Model
     public function calculateTotalValue(): float
     {
         $holdingsValue = $this->holdings->sum('current_value');
+
         return round($this->cash_balance + $holdingsValue, 2);
     }
 
@@ -89,7 +90,7 @@ class Portfolio extends Model
         $totalValue = $this->calculateTotalValue();
         $return = $totalValue - $this->initial_balance;
         $returnPercent = $this->initial_balance > 0 ? ($return / $this->initial_balance) * 100 : 0;
-        
+
         return [
             'total_value' => $totalValue,
             'return' => round($return, 2),
@@ -123,6 +124,7 @@ class Portfolio extends Model
     public function hasEnoughShares(int $stockId, int $quantity): bool
     {
         $holding = $this->holdings()->where('stock_id', $stockId)->first();
+
         return $holding && $holding->quantity >= $quantity;
     }
 
@@ -133,14 +135,14 @@ class Portfolio extends Model
     {
         $allocation = [];
         $totalValue = $this->holdings->sum('current_value');
-        
+
         if ($totalValue == 0) {
             return [];
         }
 
         foreach ($this->holdings as $holding) {
             $sector = $holding->stock->sector ?? 'Other';
-            if (!isset($allocation[$sector])) {
+            if (! isset($allocation[$sector])) {
                 $allocation[$sector] = 0;
             }
             $allocation[$sector] += $holding->current_value;
@@ -157,7 +159,7 @@ class Portfolio extends Model
     /**
      * Get top performing holdings.
      */
-    public function getTopPerformers(int $limit = 5): \Illuminate\Support\Collection
+    public function getTopPerformers(int $limit = 5): Collection
     {
         return $this->holdings()
             ->join('stocks', 'portfolio_holdings.stock_id', '=', 'stocks.id')
@@ -169,7 +171,7 @@ class Portfolio extends Model
     /**
      * Get worst performing holdings.
      */
-    public function getWorstPerformers(int $limit = 5): \Illuminate\Support\Collection
+    public function getWorstPerformers(int $limit = 5): Collection
     {
         return $this->holdings()
             ->join('stocks', 'portfolio_holdings.stock_id', '=', 'stocks.id')

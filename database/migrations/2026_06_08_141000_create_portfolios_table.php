@@ -23,7 +23,7 @@ return new class extends Migration
             $table->integer('winning_trades')->default(0);
             $table->integer('losing_trades')->default(0);
             $table->timestamps();
-            
+
             $table->unique(['user_id']);
             $table->index('total_value');
             $table->index('portfolio_return_percent');

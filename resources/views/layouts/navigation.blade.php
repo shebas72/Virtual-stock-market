@@ -30,6 +30,11 @@
                     <x-nav-link :href="route('leaderboard')" :active="request()->routeIs('leaderboard')">
                         {{ __('Leaderboard') }}
                     </x-nav-link>
+                    @if(Auth::user()->isTenantOwner())
+                        <x-nav-link :href="route('team.index')" :active="request()->routeIs('team.*')">
+                            {{ __('Team') }}
+                        </x-nav-link>
+                    @endif
                     @if(Auth::user()->isAdmin())
                         <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
                             {{ __('Admin') }}
@@ -105,6 +110,11 @@
             <x-responsive-nav-link :href="route('leaderboard')" :active="request()->routeIs('leaderboard')">
                 {{ __('Leaderboard') }}
             </x-responsive-nav-link>
+            @if(Auth::user()->isTenantOwner())
+                <x-responsive-nav-link :href="route('team.index')" :active="request()->routeIs('team.*')">
+                    {{ __('Team') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

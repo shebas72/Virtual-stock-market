@@ -37,6 +37,7 @@ class FinnhubQuoteService
                     'message' => $exception->getMessage(),
                 ]);
                 $failed++;
+
                 continue;
             }
 
@@ -48,6 +49,7 @@ class FinnhubQuoteService
                     'status' => $response->status(),
                 ]);
                 $failed++;
+
                 continue;
             }
 

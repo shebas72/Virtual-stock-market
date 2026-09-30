@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('stock_id')->constrained()->onDelete('cascade');
             $table->string('name', 100)->default('Default');
             $table->timestamps();
-            
+
             $table->unique(['user_id', 'stock_id']);
             $table->index('user_id');
             $table->index('stock_id');

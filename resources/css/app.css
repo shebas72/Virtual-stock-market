@@ -2,3 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
+.bg-cyan-700 {
+    background-color: #0e7490;
+}

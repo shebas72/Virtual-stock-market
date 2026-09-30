@@ -1,34 +1,44 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\StockController;
-use App\Http\Controllers\PortfolioController;
-use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminTenantController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LandingController;
+use App\Http\Controllers\PortfolioController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StockController;
+use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TenantInvitationController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+Route::get('/', [LandingController::class, 'index'])
+    ->name('landing');
+
+Route::get('/invitations/{token}', [TenantInvitationController::class, 'show'])->name('invitations.accept.show');
+Route::post('/invitations/{token}', [TenantInvitationController::class, 'accept'])->name('invitations.accept');
 
 // Dashboard
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'tenant.active'])
     ->name('dashboard');
 
 // Leaderboard
 Route::get('/leaderboard', [DashboardController::class, 'leaderboard'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'tenant.active'])
     ->name('leaderboard');
 
 // Market Overview
 Route::get('/market', [DashboardController::class, 'market'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'tenant.active'])
     ->name('market');
 
 // Stocks
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'tenant.active'])->group(function () {
+    Route::get('/team', [TeamController::class, 'index'])->middleware('tenant.owner')->name('team.index');
+    Route::post('/team/invitations', [TeamController::class, 'invite'])->middleware('tenant.owner')->name('team.invitations.store');
+    Route::post('/team/members', [TeamController::class, 'createMember'])->middleware('tenant.owner')->name('team.members.store');
+    Route::patch('/team/members/{user}/status', [TeamController::class, 'toggleMemberStatus'])->middleware('tenant.owner')->name('team.members.status');
     Route::get('/stocks', [StockController::class, 'index'])->name('stocks.index');
     Route::get('/stocks/search', [StockController::class, 'search'])->name('stocks.search');
     Route::get('/stocks/{stock}', [StockController::class, 'show'])->name('stocks.show');
@@ -37,7 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Portfolio
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'tenant.active'])->group(function () {
     Route::get('/portfolio', [PortfolioController::class, 'index'])->name('portfolio.index');
     Route::get('/portfolio/holdings/{holding}', [PortfolioController::class, 'holding'])->name('portfolio.holding');
     Route::get('/portfolio/performance', [PortfolioController::class, 'performance'])->name('portfolio.performance');
@@ -45,7 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Transactions
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'tenant.active'])->group(function () {
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/create/{stock}', [TransactionController::class, 'create'])->name('transactions.create');
     Route::post('/transactions/{stock}', [TransactionController::class, 'store'])->name('transactions.store');
@@ -57,7 +67,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
-    
+
     // Stocks Management
     Route::get('/stocks', [AdminController::class, 'stocks'])->name('stocks');
     Route::get('/stocks/create', [AdminController::class, 'createStock'])->name('stocks.create');
@@ -66,18 +76,25 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::put('/stocks/{stock}', [AdminController::class, 'updateStock'])->name('stocks.update');
     Route::delete('/stocks/{stock}', [AdminController::class, 'deleteStock'])->name('stocks.delete');
     Route::post('/stocks/{stock}/toggle', [AdminController::class, 'toggleStock'])->name('stocks.toggle');
-    
+
     // Users Management
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::get('/users/{user}', [AdminController::class, 'showUser'])->name('users.show');
     Route::patch('/users/{user}/role', [AdminController::class, 'updateUserRole'])->name('users.role');
     Route::post('/users/{user}/reset-portfolio', [AdminController::class, 'resetPortfolio'])->name('users.reset-portfolio');
-    
+
+    // Tenant Management
+    Route::get('/tenants', [AdminTenantController::class, 'index'])->name('tenants.index');
+    Route::get('/tenants/{tenant}/edit', [AdminTenantController::class, 'edit'])->name('tenants.edit');
+    Route::put('/tenants/{tenant}', [AdminTenantController::class, 'update'])->name('tenants.update');
+    Route::patch('/tenants/{tenant}/status', [AdminTenantController::class, 'toggleStatus'])->name('tenants.status');
+    Route::delete('/tenants/{tenant}', [AdminTenantController::class, 'destroy'])->name('tenants.destroy');
+
     // Market Controls
     Route::get('/market', [AdminController::class, 'market'])->name('market');
     Route::post('/market/refresh', [AdminController::class, 'refreshPrices'])->name('market.refresh');
     Route::post('/market/reset', [AdminController::class, 'resetMarket'])->name('market.reset');
-    
+
     // Transactions Overview
     Route::get('/transactions', [AdminController::class, 'transactions'])->name('transactions');
 });

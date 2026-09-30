@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('status', 20)->default('completed'); // pending, completed, cancelled, rejected
             $table->text('notes')->nullable();
             $table->timestamps();
-            
+
             $table->index('user_id');
             $table->index('stock_id');
             $table->index('type');

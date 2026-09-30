@@ -1,9 +1,9 @@
 <?php
 
+use App\Services\FinnhubQuoteService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-use App\Services\FinnhubQuoteService;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

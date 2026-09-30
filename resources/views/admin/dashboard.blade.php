@@ -149,12 +149,15 @@
             </div>
 
             <!-- Quick Actions -->
-            <div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <a href="{{ route('admin.stocks') }}" class="bg-blue-600 text-white p-4 rounded-lg text-center hover:bg-blue-700 transition">
                     Manage Stocks
                 </a>
                 <a href="{{ route('admin.users') }}" class="bg-green-600 text-white p-4 rounded-lg text-center hover:bg-green-700 transition">
                     Manage Users
+                </a>
+                <a href="{{ route('admin.tenants.index') }}" class="bg-cyan-700 text-white p-4 rounded-lg text-center hover:bg-cyan-800 transition">
+                    Manage Tenants
                 </a>
                 <a href="{{ route('admin.market') }}" class="bg-purple-600 text-white p-4 rounded-lg text-center hover:bg-purple-700 transition">
                     Market Controls

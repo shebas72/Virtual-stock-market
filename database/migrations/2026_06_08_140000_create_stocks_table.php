@@ -29,7 +29,7 @@ return new class extends Migration
             $table->decimal('dividend_yield', 5, 4)->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->index('symbol');
             $table->index('sector');
             $table->index('is_active');

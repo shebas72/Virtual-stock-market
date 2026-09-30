@@ -2,12 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Stock extends Model
 {
@@ -79,7 +77,7 @@ class Stock extends Model
     public function watchlists(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'watchlists')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     /**
@@ -98,6 +96,7 @@ class Stock extends Model
         if ($this->previous_close && $this->current_price) {
             return round($this->current_price - $this->previous_close, 2);
         }
+
         return null;
     }
 
@@ -109,6 +108,7 @@ class Stock extends Model
         if ($this->previous_close && $this->current_price && $this->previous_close > 0) {
             return round((($this->current_price - $this->previous_close) / $this->previous_close) * 100, 4);
         }
+
         return null;
     }
 
@@ -125,9 +125,9 @@ class Stock extends Model
      */
     public function scopeSearch($query, $search)
     {
-        return $query->where(function($q) use ($search) {
+        return $query->where(function ($q) use ($search) {
             $q->where('symbol', 'LIKE', "%{$search}%")
-              ->orWhere('name', 'LIKE', "%{$search}%");
+                ->orWhere('name', 'LIKE', "%{$search}%");
         });
     }
 

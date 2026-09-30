@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Stock;
-use App\Models\User;
-use App\Models\Transaction;
-use App\Models\Portfolio;
 use App\Models\MarketData;
+use App\Models\Portfolio;
+use App\Models\Stock;
+use App\Models\Transaction;
+use App\Models\User;
 use App\Services\FinnhubQuoteService;
 use App\Services\MarketService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 
 class AdminController extends Controller
@@ -49,7 +47,7 @@ class AdminController extends Controller
             ->has('portfolio')
             ->with('portfolio')
             ->get()
-            ->sortByDesc(fn($u) => $u->portfolio->portfolio_return_percent)
+            ->sortByDesc(fn ($u) => $u->portfolio->portfolio_return_percent)
             ->take(5)
             ->values();
 
@@ -118,7 +116,7 @@ class AdminController extends Controller
     public function updateStock(Request $request, Stock $stock)
     {
         $validated = $request->validate([
-            'symbol' => 'required|string|max:10|unique:stocks,symbol,' . $stock->id,
+            'symbol' => 'required|string|max:10|unique:stocks,symbol,'.$stock->id,
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'sector' => 'nullable|string|max:100',
@@ -162,7 +160,7 @@ class AdminController extends Controller
      */
     public function toggleStock(Stock $stock)
     {
-        $stock->update(['is_active' => !$stock->is_active]);
+        $stock->update(['is_active' => ! $stock->is_active]);
 
         return back()->with('success', 'Stock status updated.');
     }
@@ -221,11 +219,11 @@ class AdminController extends Controller
         }
 
         $portfolio = $user->portfolio;
-        
+
         if ($portfolio) {
             // Delete all holdings
             $portfolio->holdings()->delete();
-            
+
             // Reset portfolio values
             $portfolio->update([
                 'cash_balance' => $portfolio->initial_balance,
@@ -246,8 +244,8 @@ class AdminController extends Controller
      */
     public function market()
     {
-        $marketService = new MarketService();
-        
+        $marketService = new MarketService;
+
         $marketStatus = [
             'is_open' => $marketService->isMarketOpen(),
             'total_stocks' => Stock::active()->count(),
@@ -285,7 +283,7 @@ class AdminController extends Controller
      */
     public function resetMarket()
     {
-        $marketService = new MarketService();
+        $marketService = new MarketService;
         $marketService->resetDailyData();
 
         return back()->with('success', 'Daily market data reset successfully.');

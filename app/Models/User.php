@@ -7,12 +7,14 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role'])]
+#[Fillable(['name', 'email', 'password', 'role', 'tenant_id', 'tenant_role', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -29,7 +31,19 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'tenant_id' => 'integer',
+            'is_active' => 'boolean',
         ];
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    public function isTenantOwner(): bool
+    {
+        return $this->tenant_role === 'owner';
     }
 
     /**
@@ -59,10 +73,10 @@ class User extends Authenticatable
     /**
      * Get the stocks the user is watching.
      */
-    public function watchedStocks(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function watchedStocks(): BelongsToMany
     {
         return $this->belongsToMany(Stock::class, 'watchlists')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     /**

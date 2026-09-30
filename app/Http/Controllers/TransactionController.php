@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Stock;
-use App\Models\Transaction;
 use App\Models\Portfolio;
 use App\Models\PortfolioHolding;
+use App\Models\Stock;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -51,12 +51,12 @@ class TransactionController extends Controller
     public function create(Stock $stock)
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
         $portfolio = $user->portfolio;
-        
-        if (!$portfolio) {
+
+        if (! $portfolio) {
             return redirect()->route('dashboard')
                 ->with('error', 'No portfolio found. Please contact support.');
         }
@@ -72,9 +72,9 @@ class TransactionController extends Controller
         $maxSellQuantity = $holding ? $holding->quantity : 0;
 
         return view('transactions.create', compact(
-            'stock', 
-            'portfolio', 
-            'maxBuyQuantity', 
+            'stock',
+            'portfolio',
+            'maxBuyQuantity',
             'maxSellQuantity'
         ));
     }
@@ -92,12 +92,12 @@ class TransactionController extends Controller
         ]);
 
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
         $portfolio = $user->portfolio;
 
-        if (!$portfolio) {
+        if (! $portfolio) {
             return back()->withErrors(['error' => 'No portfolio found.']);
         }
 
@@ -112,6 +112,7 @@ class TransactionController extends Controller
                 // Check if user has enough cash
                 if ($portfolio->cash_balance < $totalAmount) {
                     DB::rollBack();
+
                     return back()->withErrors(['quantity' => 'Insufficient cash balance.']);
                 }
 
@@ -147,8 +148,9 @@ class TransactionController extends Controller
                     ->where('stock_id', $stock->id)
                     ->first();
 
-                if (!$holding || $holding->quantity < $quantity) {
+                if (! $holding || $holding->quantity < $quantity) {
                     DB::rollBack();
+
                     return back()->withErrors(['quantity' => 'Insufficient shares to sell.']);
                 }
 
@@ -157,7 +159,7 @@ class TransactionController extends Controller
 
                 // Update holding
                 $holding->quantity -= $quantity;
-                
+
                 if ($holding->quantity == 0) {
                     $holding->delete();
                 } else {
@@ -193,11 +195,12 @@ class TransactionController extends Controller
             DB::commit();
 
             return redirect()->route('portfolio.index')
-                ->with('success', ucfirst($validated['type']) . ' order executed successfully!');
+                ->with('success', ucfirst($validated['type']).' order executed successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Transaction failed: ' . $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Transaction failed: '.$e->getMessage()]);
         }
     }
 
