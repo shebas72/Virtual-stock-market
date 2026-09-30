@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Portfolio;
 use App\Models\Stock;
+use App\Models\SubscriptionPlan;
+use App\Models\SubscriptionSetting;
 use App\Models\User;
 use Throwable;
 
@@ -30,6 +32,52 @@ class LandingController extends Controller
      * (see Schedule::command('stocks:refresh-quotes') in routes/console.php).
      */
     private const QUOTE_REFRESH_MINUTES = 5;
+
+    /**
+     * Trial length advertised when no subscription_settings row exists yet.
+     * Mirrors the column default of the migration that creates the table.
+     */
+    private const FALLBACK_TRIAL_DAYS = 7;
+
+    /**
+     * Marketing copy for the plans an administrator ships with. Every plan
+     * runs the identical platform and only differs by seat allowance, so the
+     * bullets stay honest — nothing is gated that the application does not
+     * actually gate. Unknown plans fall back to the constants below.
+     *
+     * @var array<string, array{tagline: string, extra: string}>
+     */
+    private const PLAN_COPY = [
+        'Starter' => [
+            'tagline' => 'Solo traders, study groups and first-time leagues.',
+            'extra' => 'Private league with its own scoped leaderboard',
+        ],
+        'Professional' => [
+            'tagline' => 'Classrooms, clubs and trading desks with a full cohort.',
+            'extra' => 'Room for a whole cohort with roles and suspension',
+        ],
+        'Enterprise' => [
+            'tagline' => 'Large programmes running many cohorts side by side.',
+            'extra' => 'Scales to whole departments and multi-term cohorts',
+        ],
+    ];
+
+    private const PLAN_FALLBACK_TAGLINE = 'A private market for your whole trading group.';
+
+    private const PLAN_FALLBACK_EXTRA = 'Everything the platform does, with room to grow.';
+
+    /**
+     * Plan tiers shown when the subscription tables are not reachable, so the
+     * pricing section still renders on an unmigrated install. Mirrors the
+     * tiers seeded by the migration that creates subscription_plans.
+     *
+     * @var array<int, array<string, mixed>>
+     */
+    private const DEMO_PLANS = [
+        ['name' => 'Starter', 'seats' => 5, 'list_price' => 0.0, 'price' => 0.0, 'term' => '1 month'],
+        ['name' => 'Professional', 'seats' => 25, 'list_price' => 0.0, 'price' => 0.0, 'term' => '1 month'],
+        ['name' => 'Enterprise', 'seats' => 100, 'list_price' => 0.0, 'price' => 0.0, 'term' => '1 month'],
+    ];
 
     /**
      * Representative market snapshot used when the database is not
@@ -81,6 +129,7 @@ class LandingController extends Controller
     public function index()
     {
         $quotes = $this->quotes();
+        $trialDays = $this->trialDays();
 
         return view('landing.index', [
             'quotes' => $quotes,
@@ -89,7 +138,108 @@ class LandingController extends Controller
             'stats' => $this->marketStats(),
             'startingBalance' => self::STARTING_BALANCE,
             'refreshMinutes' => self::QUOTE_REFRESH_MINUTES,
+            'plans' => $this->plans(),
+            'trialDays' => $trialDays,
+            // Concrete, reassuring date: what a workspace created today gets.
+            'trialEndsOn' => now()->addDays($trialDays)->format('F j, Y'),
         ]);
+    }
+
+    /**
+     * Subscription plans to advertise, sorted from the smallest seat allowance
+     * to the largest so the pricing ladder reads left to right. Seats, terms
+     * and prices come from whatever an administrator has configured; only the
+     * wording lives here.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function plans(): array
+    {
+        $rows = $this->planRows();
+        // The middle tier is the one to draw the eye to; a plan standing alone
+        // (or a two-plan ladder) is never dressed up as "popular".
+        $popularIndex = count($rows) >= 3 ? intdiv(count($rows), 2) : -1;
+
+        return collect($rows)
+            ->map(function (array $row, int $index) use ($popularIndex) {
+                $copy = self::PLAN_COPY[$row['name']] ?? null;
+
+                return [
+                    ...$row,
+                    'tagline' => $copy['tagline'] ?? self::PLAN_FALLBACK_TAGLINE,
+                    'features' => $this->planFeatures($row['seats'], $copy['extra'] ?? self::PLAN_FALLBACK_EXTRA),
+                    'popular' => $index === $popularIndex,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Raw plan tiers straight from the database, falling back to the seeded
+     * tiers when the table is missing or the database is unreachable.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function planRows(): array
+    {
+        try {
+            $plans = SubscriptionPlan::query()
+                ->where('is_active', true)
+                ->orderBy('user_limit')
+                ->orderBy('id')
+                ->get();
+        } catch (Throwable) {
+            return self::DEMO_PLANS;
+        }
+
+        if ($plans->isEmpty()) {
+            return self::DEMO_PLANS;
+        }
+
+        return $plans
+            ->map(fn (SubscriptionPlan $plan) => [
+                'name' => $plan->name,
+                'seats' => $plan->user_limit,
+                'list_price' => (float) $plan->price,
+                'price' => (float) $plan->effectivePrice(),
+                'term' => $plan->termLabel(),
+                'is_default' => (bool) $plan->is_default,
+            ])
+            ->all();
+    }
+
+    /**
+     * Per-plan bullets. The application only varies the seat allowance between
+     * plans, so the shared capabilities are repeated on every tier rather than
+     * invented as extras.
+     *
+     * @return array<int, string>
+     */
+    private function planFeatures(int $seats, string $extra): array
+    {
+        return [
+            'Up to '.$seats.' traders, each with a private portfolio and $'.number_format(self::STARTING_BALANCE).' of simulated cash',
+            'Live Finnhub quotes refreshed every '.self::QUOTE_REFRESH_MINUTES.' minutes',
+            'Portfolio analytics, full trade history and scoped leaderboards',
+            'Owner controls: email invites, expiring links, roles and suspension',
+            $extra,
+        ];
+    }
+
+    /**
+     * Length of the free trial every new workspace starts with, as configured
+     * by an administrator on the subscription plans screen.
+     */
+    private function trialDays(): int
+    {
+        try {
+            $trialDays = SubscriptionSetting::defaultTrialDays();
+        } catch (Throwable) {
+            return self::FALLBACK_TRIAL_DAYS;
+        }
+
+        return $trialDays > 0 ? $trialDays : self::FALLBACK_TRIAL_DAYS;
     }
 
     /**

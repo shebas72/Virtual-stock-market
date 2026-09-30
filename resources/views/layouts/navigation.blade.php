@@ -35,6 +35,11 @@
                             {{ __('Team') }}
                         </x-nav-link>
                     @endif
+                    @if(Auth::user()->tenant_id)
+                        <x-nav-link :href="route('subscription.show')" :active="request()->routeIs('subscription.*')">
+                            {{ __('Subscription') }}
+                        </x-nav-link>
+                    @endif
                     @if(Auth::user()->isAdmin())
                         <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
                             {{ __('Admin') }}
@@ -113,6 +118,11 @@
             @if(Auth::user()->isTenantOwner())
                 <x-responsive-nav-link :href="route('team.index')" :active="request()->routeIs('team.*')">
                     {{ __('Team') }}
+                </x-responsive-nav-link>
+            @endif
+            @if(Auth::user()->tenant_id)
+                <x-responsive-nav-link :href="route('subscription.show')" :active="request()->routeIs('subscription.*')">
+                    {{ __('Subscription') }}
                 </x-responsive-nav-link>
             @endif
         </div>

@@ -49,7 +49,7 @@ resources/views/
 │   ├── index.blade.php          # Page shell (fonts, Vite entries, sections)
 │   └── partials/                # nav, hero, hero-terminal, ticker, stats,
 │                                # features, how-it-works, order-ticket,
-│                                # showcase, leaderboard, workspaces,
+│                                # showcase, leaderboard, workspaces, pricing,
 │                                # testimonials, faq, cta, footer
 ├── components/landing/          # section-heading, feature-card, stat, faq-item
 ├── dashboard.blade.php          # Main dashboard

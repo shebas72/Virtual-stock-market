@@ -2,6 +2,8 @@
 
 use App\Models\Portfolio;
 use App\Models\Stock;
+use App\Models\SubscriptionPlan;
+use App\Models\SubscriptionSetting;
 use App\Models\Tenant;
 use App\Models\User;
 
@@ -106,3 +108,55 @@ it('points authenticated traders at their dashboard instead of sign-up', functio
     $response->assertSee('Open my portfolio');
     $response->assertDontSee('Create free account');
 });
+
+it('advertises the published plans alongside the configured free trial', function () {
+    $response = $this->get(route('landing'));
+
+    $response->assertOk();
+
+    // Plans come from the subscription tables, smallest seat allowance first.
+    $response->assertSee('Trader seats included');
+    $response->assertSeeInOrder(['Starter', 'Professional', 'Enterprise']);
+    $response->assertSee('7-day free trial');
+    $response->assertSee(now()->addDays(7)->format('F j, Y'));
+
+    // The seat estimator is wired to the real tiers, not a static picture.
+    $response->assertSee('planFinder', false);
+    $response->assertSee('Best fit:', false);
+});
+
+it('reflects plan and trial changes made by an administrator on the landing page', function () {
+    SubscriptionPlan::create([
+        'name' => 'Cohort',
+        'user_limit' => 3,
+        'duration_count' => 3,
+        'duration_unit' => 'month',
+        'price' => 40,
+        'discounted_price' => 29,
+        'is_active' => true,
+    ]);
+    SubscriptionSetting::query()->update(['trial_days' => 14]);
+
+    $response = $this->get(route('landing'));
+
+    $response->assertOk();
+    $response->assertSee('14-day free trial');
+    $response->assertSee('Cohort');
+    $response->assertSee('$29.00');
+    $response->assertSee('$40.00');
+    $response->assertSee('3 months');
+    $response->assertSeeInOrder(['Cohort', 'Starter']);
+});
+
+it('invites signed-in traders to manage their workspace plan instead of signing up', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->get(route('landing'));
+
+    $response->assertOk();
+    $response->assertSee('Manage workspace plan');
+    $response->assertSee(route('subscription.show'), false);
+    $response->assertDontSee('Start the 14-day free trial');
+    $response->assertDontSee('Start the 7-day free trial');
+});
+

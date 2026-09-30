@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Portfolio;
+use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
 use App\Models\User;
 
@@ -23,14 +24,17 @@ function createManagedTenant(string $name = 'Acme Workspace'): array
     $tenant = Tenant::create([
         'name' => $name,
         'slug' => strtolower(str_replace(' ', '-', $name)),
+        'is_active' => true,
     ]);
     $owner = User::factory()->create([
         'tenant_id' => $tenant->id,
         'tenant_role' => 'owner',
+        'is_active' => true,
     ]);
     $member = User::factory()->create([
         'tenant_id' => $tenant->id,
         'tenant_role' => 'member',
+        'is_active' => true,
     ]);
 
     return [$tenant, $owner, $member];
@@ -54,8 +58,7 @@ it('allows the platform admin to edit a tenant name and slug', function () {
     $response = $this->actingAs($admin)->put(route('admin.tenants.update', $tenant), [
         'name' => 'Renamed Workspace',
         'slug' => 'renamed-workspace',
-        'subscription_plan' => 'starter',
-        'subscription_price' => '0.00',
+        'subscription_plan_id' => $tenant->subscription_plan_id,
         'subscription_status' => 'trialing',
         'trial_ends_at' => now()->addDays(7)->format('Y-m-d H:i:s'),
     ]);
@@ -65,20 +68,18 @@ it('allows the platform admin to edit a tenant name and slug', function () {
         'id' => $tenant->id,
         'name' => 'Renamed Workspace',
         'slug' => 'renamed-workspace',
-        'subscription_plan' => 'starter',
-        'subscription_price' => '0.00',
+        'subscription_plan' => 'Starter',
     ]);
 });
 
-it('lets the platform admin assign a plan, custom price, and active subscription', function () {
+it('lets the platform admin assign a catalog plan and activate its subscription', function () {
     $admin = createPlatformAdmin();
     [$tenant] = createManagedTenant();
 
     $response = $this->actingAs($admin)->put(route('admin.tenants.update', $tenant), [
         'name' => $tenant->name,
         'slug' => $tenant->slug,
-        'subscription_plan' => 'professional',
-        'subscription_price' => '49.95',
+        'subscription_plan_id' => SubscriptionPlan::where('name', 'Professional')->value('id'),
         'subscription_status' => 'active',
         'subscription_ends_at' => now()->addMonth()->format('Y-m-d H:i:s'),
     ]);
@@ -86,8 +87,8 @@ it('lets the platform admin assign a plan, custom price, and active subscription
     $response->assertRedirect(route('admin.tenants.index'));
     $this->assertDatabaseHas('tenants', [
         'id' => $tenant->id,
-        'subscription_plan' => 'professional',
-        'subscription_price' => '49.95',
+        'subscription_plan' => 'Professional',
+        'subscription_price' => '0.00',
         'subscription_status' => 'active',
     ]);
 });
@@ -96,11 +97,16 @@ it('starts a seven-day trial and blocks workspace access after it expires', func
     [$tenant, $owner] = createManagedTenant();
 
     expect($tenant->subscription_status)->toBe('trialing')
-        ->and($tenant->trial_ends_at->isSameDay(now()->addDays(7)))->toBeTrue();
+        ->and($tenant->trial_ends_at->isSameDay(now()->addDays(7)))->toBeTrue()
+        ->and($tenant->hasValidSubscription())->toBeTrue()
+        ->and($tenant->is_active)->toBeTrue()
+        ->and($owner->is_active)->toBeTrue();
+
+    $this->actingAs($owner)->get(route('dashboard'))->assertOk();
 
     $tenant->update(['trial_ends_at' => now()->subSecond()]);
 
-    $this->actingAs($owner)->get(route('dashboard'))->assertForbidden();
+    $this->actingAs($owner)->get(route('dashboard'))->assertRedirect(route('subscription.show'));
 });
 
 it('suspends a tenant and denies its members access to workspace routes', function () {

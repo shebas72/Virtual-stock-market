@@ -21,6 +21,9 @@ class TeamController extends Controller
         return view('team.index', [
             'tenant' => $tenant,
             'members' => $tenant->users()->orderBy('name')->get(),
+            'userCount' => $tenant->users()->count(),
+            'userLimit' => $tenant->subscriptionPlan?->user_limit,
+            'hasAvailableUserSlot' => $tenant->hasAvailableUserSlot(),
             'invitations' => $tenant->invitations()
                 ->whereNull('accepted_at')
                 ->where('expires_at', '>', now())
@@ -37,6 +40,9 @@ class TeamController extends Controller
 
         $token = Str::random(64);
         $tenant = $request->user()->tenant;
+        if (! $tenant->hasAvailableUserSlot()) {
+            return back()->withErrors(['email' => 'Your subscription has no available user seats. Upgrade your plan or remove a pending invitation.']);
+        }
 
         $tenant->invitations()->where('email', $validated['email'])->delete();
         TenantInvitation::create([
@@ -58,7 +64,12 @@ class TeamController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $request->user()->tenant->users()->create([
+        $tenant = $request->user()->tenant;
+        if (! $tenant->hasAvailableUserSlot()) {
+            return back()->withErrors(['email' => 'Your subscription has no available user seats. Upgrade your plan or remove a pending invitation.']);
+        }
+
+        $tenant->users()->create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),

@@ -33,6 +33,7 @@
                         ['#market', 'Market tape'],
                         ['#leaderboard', 'Leaderboard'],
                         ['#workspaces', 'Workspaces'],
+                        ['#pricing', 'Pricing'],
                     ] as [$href, $label])
                         <li>
                             <a href="{{ $href }}" class="text-slate-400 transition duration-300 hover:text-white">{{ $label }}</a>

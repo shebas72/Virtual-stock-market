@@ -28,16 +28,12 @@
                         <h3 class="text-base font-semibold text-gray-900 dark:text-white">Subscription</h3>
                     </div>
                     <div>
-                        <label for="subscription_plan" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Plan</label>
-                        <select id="subscription_plan" name="subscription_plan" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            @foreach($plans as $value => $label)
-                                <option value="{{ $value }}" @selected(old('subscription_plan', $tenant->subscription_plan) === $value)>{{ $label }}</option>
+                        <label for="subscription_plan_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Plan</label>
+                        <select id="subscription_plan_id" name="subscription_plan_id" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            @foreach($plans as $plan)
+                                <option value="{{ $plan->id }}" @selected((int) old('subscription_plan_id', $tenant->subscription_plan_id) === $plan->id)>{{ $plan->name }} · ${{ number_format((float) $plan->effectivePrice(), 2) }} / {{ $plan->termLabel() }}</option>
                             @endforeach
                         </select>
-                    </div>
-                    <div>
-                        <label for="subscription_price" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Monthly price (USD)</label>
-                        <input id="subscription_price" name="subscription_price" type="number" min="0" max="99999999.99" step="0.01" required value="{{ old('subscription_price', $tenant->subscription_price) }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
                     </div>
                     <div>
                         <label for="subscription_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Subscription status</label>

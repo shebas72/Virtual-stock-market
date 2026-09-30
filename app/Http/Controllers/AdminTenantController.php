@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\SubscriptionPlan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ class AdminTenantController extends Controller
     {
         $tenants = Tenant::query()
             ->withCount('users')
-            ->with(['users' => fn ($query) => $query
+            ->with(['subscriptionPlan', 'users' => fn ($query) => $query
                 ->where('tenant_role', 'owner')
                 ->select('id', 'tenant_id', 'name', 'email')])
             ->orderByDesc('created_at')
@@ -37,7 +38,7 @@ class AdminTenantController extends Controller
     {
         return view('admin.tenants.edit', [
             'tenant' => $tenant,
-            'plans' => Tenant::SUBSCRIPTION_PLANS,
+            'plans' => SubscriptionPlan::query()->orderBy('id')->get(),
         ]);
     }
 
@@ -46,18 +47,20 @@ class AdminTenantController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'slug' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('tenants', 'slug')->ignore($tenant->id)],
-            'subscription_plan' => ['required', Rule::in(array_keys(Tenant::SUBSCRIPTION_PLANS))],
-            'subscription_price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
+            'subscription_plan_id' => ['required', 'exists:subscription_plans,id'],
             'subscription_status' => ['required', Rule::in(['trialing', 'active', 'expired'])],
             'trial_ends_at' => ['nullable', 'required_if:subscription_status,trialing', 'date'],
             'subscription_ends_at' => ['nullable', 'date'],
         ]);
 
+        $plan = SubscriptionPlan::findOrFail($validated['subscription_plan_id']);
+
         $tenant->update([
             'name' => $validated['name'],
             'slug' => Str::lower($validated['slug']),
-            'subscription_plan' => $validated['subscription_plan'],
-            'subscription_price' => $validated['subscription_price'],
+            'subscription_plan_id' => $plan->id,
+            'subscription_plan' => $plan->name,
+            'subscription_price' => $plan->effectivePrice(),
             'subscription_status' => $validated['subscription_status'],
             'trial_ends_at' => $validated['trial_ends_at'] ?? null,
             'subscription_ends_at' => $validated['subscription_ends_at'] ?? null,

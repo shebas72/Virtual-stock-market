@@ -23,6 +23,16 @@
                 </div>
             @endif
 
+            <section class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-4 dark:border-gray-700">
+                <div>
+                    <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ $tenant->subscriptionPlan?->name ?? 'Subscription' }} plan</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        {{ $userCount }}{{ $userLimit ? ' of '.$userLimit : '' }} users · {{ $tenant->subscriptionPlan?->termLabel() ?? 'custom term' }}
+                    </p>
+                </div>
+                <a href="{{ route('subscription.show') }}" class="text-sm font-medium text-blue-700 underline dark:text-blue-300">View subscription</a>
+            </section>
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <section class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Create member account</h3>

@@ -42,6 +42,7 @@ class TenantInvitationController extends Controller
             abort_unless($invitation->tenant->is_active, 403, 'This workspace is suspended.');
 
             abort_if(User::where('email', $invitation->email)->exists(), 409, 'This email already has an account. Sign in to that account instead.');
+            abort_unless($invitation->tenant->hasAvailableUserSlot(false), 403, 'This workspace has reached the user limit for its subscription.');
 
             $user = User::create([
                 'name' => $validated['name'],

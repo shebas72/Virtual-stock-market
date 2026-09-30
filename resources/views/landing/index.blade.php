@@ -59,6 +59,7 @@
                 @include('landing.partials.showcase')
                 @include('landing.partials.leaderboard')
                 @include('landing.partials.workspaces')
+                @include('landing.partials.pricing')
                 @include('landing.partials.testimonials')
                 @include('landing.partials.faq')
                 @include('landing.partials.cta')

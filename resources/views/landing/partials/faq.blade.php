@@ -43,6 +43,22 @@
                     member gets a private portfolio, and you can suspend access at any time without losing their history.
                 </x-landing.faq-item>
 
+                <x-landing.faq-item question="How does the free trial work?">
+                    A workspace opens in trial the moment it is created, so you get the complete platform — live
+                    quotes, analytics, invitations and leaderboards — for {{ $trialDays }} days with no card and no
+                    deposit. Plans differ only by how many traders they hold.
+                </x-landing.faq-item>
+
+                <x-landing.faq-item question="What happens when the trial ends?">
+                    The workspace pauses at the subscription screen until its owner chooses a plan. Nothing is charged
+                    on its own, and every portfolio, trade and note is still exactly where you left it.
+                </x-landing.faq-item>
+
+                <x-landing.faq-item question="Can we change plans later?">
+                    Any time, by the workspace owner. The one guard rail is capacity: you cannot move onto a plan with
+                    fewer seats than the workspace already has counted between members and pending invitations.
+                </x-landing.faq-item>
+
                 <x-landing.faq-item question="How does the leaderboard work?">
                     Portfolios are ranked by return percentage against the ${{ number_format($startingBalance) }} you
                     start with, so late joiners are never punished for missing an early rally.

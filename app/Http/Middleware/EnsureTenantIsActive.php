@@ -14,7 +14,9 @@ class EnsureTenantIsActive
 
         $tenant = $request->user()?->tenant;
         abort_unless($tenant?->is_active, 403, 'This workspace is suspended. Contact support for assistance.');
-        abort_unless($tenant->hasValidSubscription(), 403, 'This workspace subscription has expired. Contact support to reactivate it.');
+        if (! $tenant->hasValidSubscription()) {
+            return redirect()->route('subscription.show')->with('error', 'Your workspace subscription has expired. Choose a plan to restore access.');
+        }
 
         return $next($request);
     }

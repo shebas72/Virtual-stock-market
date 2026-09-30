@@ -8,6 +8,8 @@ use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TenantSubscriptionController;
+use App\Http\Controllers\AdminSubscriptionPlanController;
 use App\Http\Controllers\TenantInvitationController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +34,13 @@ Route::get('/leaderboard', [DashboardController::class, 'leaderboard'])
 Route::get('/market', [DashboardController::class, 'market'])
     ->middleware(['auth', 'verified', 'tenant.active'])
     ->name('market');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/subscription', [TenantSubscriptionController::class, 'show'])->name('subscription.show');
+    Route::post('/subscription/{subscriptionPlan}', [TenantSubscriptionController::class, 'changePlan'])
+        ->middleware('tenant.owner')
+        ->name('subscription.change');
+});
 
 // Stocks
 Route::middleware(['auth', 'verified', 'tenant.active'])->group(function () {
@@ -89,6 +98,13 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::put('/tenants/{tenant}', [AdminTenantController::class, 'update'])->name('tenants.update');
     Route::patch('/tenants/{tenant}/status', [AdminTenantController::class, 'toggleStatus'])->name('tenants.status');
     Route::delete('/tenants/{tenant}', [AdminTenantController::class, 'destroy'])->name('tenants.destroy');
+
+    // Subscription Plans
+    Route::get('/subscription-plans', [AdminSubscriptionPlanController::class, 'index'])->name('subscription-plans.index');
+    Route::post('/subscription-plans', [AdminSubscriptionPlanController::class, 'store'])->name('subscription-plans.store');
+    Route::put('/subscription-plans/trial', [AdminSubscriptionPlanController::class, 'updateTrial'])->name('subscription-plans.trial');
+    Route::put('/subscription-plans/{subscriptionPlan}', [AdminSubscriptionPlanController::class, 'update'])->name('subscription-plans.update');
+    Route::delete('/subscription-plans/{subscriptionPlan}', [AdminSubscriptionPlanController::class, 'destroy'])->name('subscription-plans.destroy');
 
     // Market Controls
     Route::get('/market', [AdminController::class, 'market'])->name('market');

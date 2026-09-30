@@ -154,6 +154,46 @@ section[id] {
     }
 }
 
+/* --- Seat estimator range input (pricing section) --- */
+.plan-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.8), rgba(99, 102, 241, 0.85));
+    outline: none;
+    cursor: pointer;
+}
+
+.plan-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 22px;
+    width: 22px;
+    border-radius: 999px;
+    background: #05060f;
+    border: 2px solid rgba(129, 140, 248, 0.9);
+    box-shadow: 0 0 22px -4px rgba(99, 102, 241, 0.85);
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.plan-slider::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 999px;
+    background: #05060f;
+    border: 2px solid rgba(129, 140, 248, 0.9);
+    box-shadow: 0 0 22px -4px rgba(99, 102, 241, 0.85);
+}
+
+.plan-slider:hover::-webkit-slider-thumb,
+.plan-slider:focus-visible::-webkit-slider-thumb {
+    transform: scale(1.14);
+    border-color: #6ee7b7;
+}
+
 /* --- Custom scrollbar for the dark marketing shell --- */
 @media (min-width: 768px) {
     ::-webkit-scrollbar {

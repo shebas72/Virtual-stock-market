@@ -75,8 +75,8 @@
                                         </span>
                                     </td>
                                     <td class="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                                        <div>{{ \App\Models\Tenant::SUBSCRIPTION_PLANS[$tenant->subscription_plan] ?? $tenant->subscription_plan }}</div>
-                                        <div class="text-gray-500 dark:text-gray-400">{{ ucfirst($tenant->subscription_status) }} · ${{ number_format((float) $tenant->subscription_price, 2) }}/mo</div>
+                                        <div>{{ $tenant->subscriptionPlan?->name ?? $tenant->subscription_plan }}</div>
+                                        <div class="text-gray-500 dark:text-gray-400">{{ ucfirst($tenant->subscription_status) }} · ${{ number_format((float) ($tenant->subscriptionPlan?->effectivePrice() ?? $tenant->subscription_price), 2) }} / {{ $tenant->subscriptionPlan?->termLabel() ?? 'custom term' }}</div>
                                     </td>
                                     <td class="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">{{ $tenant->created_at->format('M d, Y') }}</td>
                                     <td class="px-5 py-4">

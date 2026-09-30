@@ -27,6 +27,7 @@
                 ['#how-it-works', 'How it works'],
                 ['#market', 'Markets'],
                 ['#leaderboard', 'Leaderboard'],
+                ['#pricing', 'Pricing'],
                 ['#faq', 'FAQ'],
             ] as [$href, $label])
                 <a
@@ -102,6 +103,7 @@
                 ['#how-it-works', 'How it works'],
                 ['#market', 'Markets'],
                 ['#leaderboard', 'Leaderboard'],
+                ['#pricing', 'Pricing'],
                 ['#faq', 'FAQ'],
             ] as [$href, $label])
                 <a

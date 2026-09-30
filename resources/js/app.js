@@ -176,6 +176,32 @@ Alpine.data('liveTicker', (quotes = [], interval = 3200) => ({
     },
 }));
 
+/**
+ * Pair a headcount with the subscription plan that can actually hold it.
+ *
+ * Usage: x-data="planFinder(@js($planTiers), 12)"
+ */
+Alpine.data('planFinder', (tiers = [], start = 1) => ({
+    tiers,
+    traders: Math.max(1, Math.min(Number(start) || 1, Math.max(...tiers.map((tier) => tier.seats), 1))),
+
+    get match() {
+        return this.tiers.find((tier) => this.traders <= tier.seats) ?? this.tiers.at(-1) ?? null;
+    },
+
+    get matchName() {
+        return this.match?.name ?? '';
+    },
+
+    get matchSeats() {
+        return this.match?.seats ?? 0;
+    },
+
+    get traderLabel() {
+        return this.traders === 1 ? 'trader' : 'traders';
+    },
+}));
+
 Alpine.start();
 
 /**
