@@ -2,7 +2,10 @@
     <x-slot name="header">
         <div class="flex items-center justify-between gap-4">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Subscription Plans</h2>
-            <a href="{{ route('admin.dashboard') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">Admin dashboard</a>
+            <div class="flex items-center gap-4">
+                <a href="{{ route('admin.payments.index') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">Payments report</a>
+                <a href="{{ route('admin.dashboard') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">Admin dashboard</a>
+            </div>
         </div>
     </x-slot>
 
@@ -34,6 +37,54 @@
                         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button>
                     </form>
                 </div>
+            </section>
+
+            <section class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Payment gateways</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Enable or disable online payments and choose which gateways workspace owners can pay with.</p>
+                    </div>
+                </div>
+                <form action="{{ route('admin.subscription-plans.payments') }}" method="POST" class="mt-4 space-y-4">
+                    @csrf
+                    @method('PUT')
+                    <label class="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <input type="checkbox" name="payments_enabled" value="1" @checked($settings->payments_enabled) class="rounded border-gray-300 text-blue-600">
+                        Payments enabled (master switch)
+                    </label>
+                    <div class="grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 sm:grid-cols-2 dark:border-gray-700">
+                        <div>
+                            <label class="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <input type="checkbox" name="stripe_enabled" value="1" @checked($settings->stripe_enabled) class="rounded border-gray-300 text-blue-600">
+                                Stripe
+                            </label>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                @if($gatewayConfigured['stripe'] ?? false)
+                                    API keys configured.
+                                @else
+                                    Running in sandbox mode — set STRIPE_SECRET to go live.
+                                @endif
+                            </p>
+                        </div>
+                        <div>
+                            <label class="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <input type="checkbox" name="paypal_enabled" value="1" @checked($settings->paypal_enabled) class="rounded border-gray-300 text-blue-600">
+                                PayPal
+                            </label>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                @if($gatewayConfigured['paypal'] ?? false)
+                                    API keys configured ({{ config('services.paypal.mode', 'sandbox') }} mode).
+                                @else
+                                    Running in sandbox mode — set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET to go live.
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save payment settings</button>
+                    </div>
+                </form>
             </section>
 
             <section class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">

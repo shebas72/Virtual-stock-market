@@ -74,6 +74,11 @@ class Tenant extends Model
         return $this->belongsTo(SubscriptionPlan::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SubscriptionPayment::class);
+    }
+
     public function hasAvailableUserSlot(bool $includePendingInvitations = true): bool
     {
         $userLimit = $this->subscriptionPlan?->user_limit;

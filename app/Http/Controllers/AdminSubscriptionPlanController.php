@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SubscriptionPlan;
 use App\Models\SubscriptionSetting;
+use App\Services\PaymentGatewayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,12 +13,17 @@ use Illuminate\View\View;
 
 class AdminSubscriptionPlanController extends Controller
 {
-    public function index(): View
+    public function index(PaymentGatewayService $payments): View
     {
         $plans = SubscriptionPlan::query()->withCount('tenants')->orderBy('id')->get();
-        $settings = SubscriptionSetting::query()->firstOrCreate([], ['trial_days' => 7]);
+        $settings = SubscriptionSetting::current();
 
-        return view('admin.subscription-plans.index', compact('plans', 'settings'));
+        $gatewayConfigured = [
+            PaymentGatewayService::STRIPE => $payments->gatewayConfigured(PaymentGatewayService::STRIPE),
+            PaymentGatewayService::PAYPAL => $payments->gatewayConfigured(PaymentGatewayService::PAYPAL),
+        ];
+
+        return view('admin.subscription-plans.index', compact('plans', 'settings', 'gatewayConfigured'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -72,6 +78,17 @@ class AdminSubscriptionPlanController extends Controller
             ->update(['trial_days' => $validated['trial_days']]);
 
         return back()->with('success', 'Default free-trial length updated.');
+    }
+
+    public function updatePayments(Request $request): RedirectResponse
+    {
+        SubscriptionSetting::current()->update([
+            'payments_enabled' => $request->boolean('payments_enabled'),
+            'stripe_enabled' => $request->boolean('stripe_enabled'),
+            'paypal_enabled' => $request->boolean('paypal_enabled'),
+        ]);
+
+        return back()->with('success', 'Payment gateway settings updated.');
     }
 
     public function destroy(SubscriptionPlan $subscriptionPlan): RedirectResponse

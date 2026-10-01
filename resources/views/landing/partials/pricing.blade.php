@@ -320,10 +320,10 @@
         </div>
 
         <p x-reveal class="mx-auto mt-10 max-w-3xl text-center text-xs leading-relaxed text-slate-500">
-            Plans and trial length are set by the platform administrator and billing is settled outside this
-            application — the app never stores a card and nothing is charged on its own. When a trial or a term lapses
-            the workspace pauses at the subscription screen until its owner chooses a plan; portfolios and trade
-            history are never deleted.
+            Plans and trial length are set by the platform administrator, and workspace owners can pay online with
+            Stripe or PayPal when the platform enables those gateways — the app never stores a card and nothing is
+            charged on its own. When a trial or a term lapses the workspace pauses at the subscription screen until
+            its owner chooses a plan; portfolios and trade history are never deleted.
         </p>
     </div>
 </section>

@@ -39,4 +39,20 @@ return [
         'key' => env('FINNHUB_API_KEY'),
     ],
 
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
+    'paypal' => [
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'secret' => env('PAYPAL_CLIENT_SECRET'),
+        'mode' => env('PAYPAL_MODE', 'sandbox'),
+    ],
+
+    'payments' => [
+        'currency' => env('PAYMENT_CURRENCY', 'USD'),
+    ],
+
 ];

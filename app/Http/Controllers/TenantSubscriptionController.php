@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\SubscriptionPlan;
+use App\Services\PaymentGatewayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class TenantSubscriptionController extends Controller
 {
-    public function show(Request $request): View
+    public function show(Request $request, PaymentGatewayService $payments): View
     {
         $tenant = $request->user()->tenant;
         abort_unless($tenant, 404);
@@ -23,6 +24,17 @@ class TenantSubscriptionController extends Controller
                 ->where('expires_at', '>', now())
                 ->count(),
             'canManage' => $request->user()->isTenantOwner(),
+            'paymentsEnabled' => $payments->paymentsEnabled(),
+            'availableGateways' => $payments->activeGateways(),
+            'gatewayConfigured' => [
+                PaymentGatewayService::STRIPE => $payments->gatewayConfigured(PaymentGatewayService::STRIPE),
+                PaymentGatewayService::PAYPAL => $payments->gatewayConfigured(PaymentGatewayService::PAYPAL),
+            ],
+            'paymentHistory' => $tenant->payments()
+                ->with(['subscriptionPlan', 'user'])
+                ->latest()
+                ->limit(10)
+                ->get(),
         ]);
     }
 

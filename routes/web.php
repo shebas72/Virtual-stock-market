@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminPaymentController;
 use App\Http\Controllers\AdminTenantController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LandingController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\SubscriptionPaymentController;
 use App\Http\Controllers\TenantSubscriptionController;
 use App\Http\Controllers\AdminSubscriptionPlanController;
 use App\Http\Controllers\TenantInvitationController;
@@ -40,6 +42,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/subscription/{subscriptionPlan}', [TenantSubscriptionController::class, 'changePlan'])
         ->middleware('tenant.owner')
         ->name('subscription.change');
+
+    // Online subscription payments (Stripe / PayPal)
+    Route::middleware('tenant.owner')->group(function () {
+        Route::post('/billing/checkout', [SubscriptionPaymentController::class, 'store'])->name('subscription.payment.store');
+        Route::get('/billing/{payment}', [SubscriptionPaymentController::class, 'show'])->name('subscription.payment.show');
+        Route::post('/billing/{payment}/complete', [SubscriptionPaymentController::class, 'complete'])->name('subscription.payment.complete');
+        Route::post('/billing/{payment}/cancel', [SubscriptionPaymentController::class, 'cancel'])->name('subscription.payment.cancel');
+        Route::get('/billing/{payment}/callback', [SubscriptionPaymentController::class, 'callback'])->name('subscription.payment.callback');
+    });
 });
 
 // Stocks
@@ -103,8 +114,12 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/subscription-plans', [AdminSubscriptionPlanController::class, 'index'])->name('subscription-plans.index');
     Route::post('/subscription-plans', [AdminSubscriptionPlanController::class, 'store'])->name('subscription-plans.store');
     Route::put('/subscription-plans/trial', [AdminSubscriptionPlanController::class, 'updateTrial'])->name('subscription-plans.trial');
+    Route::put('/subscription-plans/payments', [AdminSubscriptionPlanController::class, 'updatePayments'])->name('subscription-plans.payments');
     Route::put('/subscription-plans/{subscriptionPlan}', [AdminSubscriptionPlanController::class, 'update'])->name('subscription-plans.update');
     Route::delete('/subscription-plans/{subscriptionPlan}', [AdminSubscriptionPlanController::class, 'destroy'])->name('subscription-plans.destroy');
+
+    // Subscription Payments
+    Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments.index');
 
     // Market Controls
     Route::get('/market', [AdminController::class, 'market'])->name('market');

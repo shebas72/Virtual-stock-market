@@ -1,3 +1,4 @@
+@php($gatewayLabels = \App\Services\PaymentGatewayService::gateways())
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between gap-4">
@@ -80,17 +81,83 @@
                                 </div>
                             </dl>
                             @if($canManage && ! $isCurrentPlan)
-                                <form action="{{ route('subscription.change', $plan) }}" method="POST" class="mt-5">
-                                    @csrf
-                                    <button type="submit" class="w-full border border-teal-700 px-4 py-2 text-sm font-medium text-teal-800 hover:bg-teal-50 dark:border-teal-400 dark:text-teal-300 dark:hover:bg-gray-700">Choose {{ $plan->name }}</button>
-                                </form>
+                                @php($planPrice = (float) $plan->effectivePrice())
+                                @if($planPrice <= 0 || ! $paymentsEnabled || $availableGateways === [])
+                                    <form action="{{ route('subscription.change', $plan) }}" method="POST" class="mt-5">
+                                        @csrf
+                                        <button type="submit" class="w-full border border-teal-700 px-4 py-2 text-sm font-medium text-teal-800 hover:bg-teal-50 dark:border-teal-400 dark:text-teal-300 dark:hover:bg-gray-700">Choose {{ $plan->name }}</button>
+                                    </form>
+                                @else
+                                    <div class="mt-5 space-y-2">
+                                        @foreach($availableGateways as $gateway)
+                                            <form action="{{ route('subscription.payment.store') }}" method="POST">
+                                                @csrf
+                                                <input type="hidden" name="subscription_plan_id" value="{{ $plan->id }}">
+                                                <input type="hidden" name="gateway" value="{{ $gateway }}">
+                                                <button type="submit" class="w-full border border-teal-700 px-4 py-2 text-sm font-medium text-teal-800 hover:bg-teal-50 dark:border-teal-400 dark:text-teal-300 dark:hover:bg-gray-700">
+                                                    Pay ${{ number_format($planPrice, 2) }} with {{ $gatewayLabels[$gateway] ?? ucfirst($gateway) }}
+                                                </button>
+                                            </form>
+                                        @endforeach
+                                    </div>
+                                @endif
                             @endif
                         </article>
                     @endforeach
                 </div>
             </section>
 
-            <p class="text-xs text-gray-500 dark:text-gray-400">Payments are handled outside this application.</p>
+            @if($canManage && $paymentHistory->isNotEmpty())
+                <section class="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                    <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+                        <h3 class="font-semibold text-gray-900 dark:text-white">Payment history</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Recent subscription payments for this workspace.</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">Plan</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">Paid by</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">Gateway</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold uppercase text-gray-500">Amount</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                @foreach($paymentHistory as $payment)
+                                    <tr>
+                                        <td class="px-6 py-3 text-sm text-gray-900 dark:text-gray-100">{{ ($payment->paid_at ?? $payment->created_at)->format('M d, Y H:i') }}</td>
+                                        <td class="px-6 py-3 text-sm text-gray-900 dark:text-gray-100">{{ $payment->subscriptionPlan?->name ?? '—' }}</td>
+                                        <td class="px-6 py-3 text-sm text-gray-900 dark:text-gray-100">{{ $payment->user?->name ?? '—' }}</td>
+                                        <td class="px-6 py-3 text-sm text-gray-900 dark:text-gray-100">{{ $payment->gatewayLabel() }}</td>
+                                        <td class="px-6 py-3 text-right text-sm font-medium text-gray-900 dark:text-gray-100">{{ $payment->currency }} {{ number_format((float) $payment->amount, 2) }}</td>
+                                        <td class="px-6 py-3">
+                                            <span class="px-2 py-1 text-xs font-semibold rounded {{ $payment->isCompleted() ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200' }}">
+                                                {{ $payment->statusLabel() }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            @endif
+
+            @if($paymentsEnabled && $availableGateways !== [])
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Secure payments are processed by
+                    {{ implode(' and ', array_map(fn ($gateway) => $gatewayLabels[$gateway] ?? ucfirst($gateway), $availableGateways)) }}.
+                    Card details never touch this application.
+                </p>
+                @if(collect($availableGateways)->contains(fn ($gateway) => ! ($gatewayConfigured[$gateway] ?? false)))
+                    <p class="text-xs text-amber-600 dark:text-amber-400">One or more gateways run in sandbox mode until API keys are configured by the administrator.</p>
+                @endif
+            @else
+                <p class="text-xs text-gray-500 dark:text-gray-400">Online payments are currently disabled. Contact your administrator to arrange payment.</p>
+            @endif
         </div>
     </div>
 </x-app-layout>
